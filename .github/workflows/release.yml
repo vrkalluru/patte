@@ -24,32 +24,39 @@ jobs:
           cache: 'pip'
 
       - name: Install dependencies
+        shell: powershell
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install pyinstaller
 
       - name: Prepare configuration
+        shell: powershell
         run: |
-          copy .env.example .env
+          Copy-Item .env.example .env -Force
 
       - name: Compile Standalone Patte
+        shell: powershell
         run: |
           pyinstaller -y --distpath dist --workpath build whisprflow.spec
 
       - name: Copy config to dist Patte
+        shell: powershell
         run: |
-          copy /Y .env dist\Patte\.env
+          Copy-Item .env.example dist\Patte\.env -Force
 
       - name: Package Standalone Zip
+        shell: powershell
         run: |
-          Compress-Archive -Path dist\Patte\* -DestinationPath dist\Patte-Windows-x64.zip
+          Compress-Archive -Path dist\Patte\* -DestinationPath dist\Patte-Windows-x64.zip -Force
 
       - name: Create Installer Payload Zip
+        shell: powershell
         run: |
-          Compress-Archive -Path dist\Patte\* -DestinationPath Patte_payload.zip
+          Compress-Archive -Path dist\Patte\* -DestinationPath Patte_payload.zip -Force
 
       - name: Compile Self-Contained Patte-Setup.exe Installer
+        shell: powershell
         run: |
           pyinstaller -y --onefile --noconsole --name "Patte-Setup" --icon "assets\icon.ico" --add-data "Patte_payload.zip;." --distpath dist --workpath build installer_setup.py
 

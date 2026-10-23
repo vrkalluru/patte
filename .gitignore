@@ -1,0 +1,18 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment & PyInstaller build artifacts
+venv/
+build/
+dist/
+
+# Local environment secrets & user state
+.env
+history.json
+*.log
+exe_debug.log
+patte.log
+whisprflow.log
+run.log

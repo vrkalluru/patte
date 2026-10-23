@@ -1,5 +1,5 @@
 """
-refiner.py — AI text refinement via Ollama / OpenAI-compatible endpoint.
+refiner.py — AI text refinement via Ollama / LM Studio / OpenAI-compatible endpoint.
 Supports local or network AI endpoints, real-time token streaming,
 and fast graceful fallback to raw Whisper transcription when unreachable.
 """
@@ -12,7 +12,7 @@ import config
 # Persistent HTTP session for TCP keep-alive
 _session = requests.Session()
 
-# Standard refinement prompt
+# Standard prompt for general LLMs (Llama 3, Qwen, Mistral, etc.)
 GENERAL_SYSTEM_PROMPT = """Follow these strict rules when refining the transcript:
 1. COURSE CORRECTION: Pay attention to mid-sentence changes of mind. When the user says things like "actually," "no, wait," "I mean," or "scratch that," discard the first thought and output only their final, corrected intention. 
    - Example: "Let's meet at 5, actually scratch that, make it 6" -> "Let's meet at 6."
@@ -25,6 +25,9 @@ GENERAL_SYSTEM_PROMPT = """Follow these strict rules when refining the transcrip
 
 5. OUTPUT ONLY: Return only the refined text. Do not include introductory notes, explanations, conversational filler, or quotation marks around the final output.
 """
+
+# Specialized prompt designed by Superwhisper for S1-Mini
+S1_MINI_SYSTEM_PROMPT = "You are a text normalizer for speech-to-text transcripts. The input begins with a control line specifying the styling, structure, and context settings; clean the transcript to match those settings and output only the cleaned text."
 
 
 def _get_api_endpoint(base_url: str) -> str:
@@ -54,16 +57,26 @@ def _build_request(cleaned_input: str, stream: bool):
     """Build endpoint URL, headers, and payload for the configured AI server."""
     base_url = config.AI_SERVER_URL.strip()
     url = _get_api_endpoint(base_url)
-    model = config.AI_MODEL.strip() or "llama3.2"
+    model = config.AI_MODEL.strip() or "s1-mini"
+
+    # Select prompt format based on whether model is Superwhisper S1-Mini or general LLM
+    if "s1-mini" in model.lower():
+        system_content = S1_MINI_SYSTEM_PROMPT
+        user_content = f"[Styling: semi-formal] [Structure: lists] [Context: general]\n{cleaned_input}"
+        temperature = 0.2
+    else:
+        system_content = GENERAL_SYSTEM_PROMPT
+        user_content = f'Transcript to refine:\n"""\n{cleaned_input}\n"""\n\nRefined output:'
+        temperature = 0.0
 
     headers = {"Content-Type": "application/json"}
     payload = {
         "model": model,
         "messages": [
-            {"role": "system", "content": GENERAL_SYSTEM_PROMPT},
-            {"role": "user", "content": f'Transcript to refine:\n"""\n{cleaned_input}\n"""\n\nRefined output:'},
+            {"role": "system", "content": system_content},
+            {"role": "user", "content": user_content},
         ],
-        "temperature": 0.0,
+        "temperature": temperature,
         "max_tokens": 1024,
         "stream": stream,
     }
@@ -142,6 +155,9 @@ def refine_stream(raw_text: str, on_token: Optional[Callable[[str], None]] = Non
 
     full_text = "".join(collected_chunks).strip()
     if full_text:
+        # Clean potential S1-mini artifacts if present
+        if full_text.startswith("utterance:"):
+            full_text = full_text[len("utterance:"):].strip().strip('"')
         print(f"[Refiner] Streamed ({model}): {full_text!r}", flush=True)
         return full_text
 

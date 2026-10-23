@@ -39,6 +39,10 @@ jobs:
         shell: powershell
         run: |
           pyinstaller -y --distpath dist --workpath build whisprflow.spec
+          if (!(Test-Path "dist\Patte\_internal\PyQt6")) {
+              Write-Error "PyQt6 was not bundled into dist\Patte\_internal! Aborting release."
+              exit 1
+          }
 
       - name: Copy config to dist Patte
         shell: powershell

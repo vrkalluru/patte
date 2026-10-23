@@ -1,28 +1,28 @@
 # -*- mode: python ; coding: utf-8 -*-
 import os
+import sysconfig
 from PyInstaller.utils.hooks import collect_data_files, collect_dynamic_libs
 
 block_cipher = None
 
 project_dir = os.path.abspath(SPECPATH)
-venv_site = os.path.join(project_dir, 'venv', 'Lib', 'site-packages')
+
+# Dynamically locate active site-packages (works in local venv AND GitHub Actions)
+site_packages = sysconfig.get_paths()["purelib"]
+if not os.path.isdir(site_packages):
+    site_packages = os.path.join(project_dir, 'venv', 'Lib', 'site-packages')
 
 # Collect ctranslate2 binaries and data
-ct2_dir = os.path.join(venv_site, 'ctranslate2')
-ct2_binaries = []
-if os.path.isdir(ct2_dir):
-    for f in os.listdir(ct2_dir):
-        if f.endswith('.dll') or f.endswith('.pyd'):
-            ct2_binaries.append((os.path.join(ct2_dir, f), 'ctranslate2'))
+ct2_binaries = collect_dynamic_libs('ctranslate2')
 
 # Collect sounddevice binaries
-sd_data_dir = os.path.join(venv_site, '_sounddevice_data')
-sd_binaries = []
+sd_binaries = collect_dynamic_libs('_sounddevice_data')
+sd_data_dir = os.path.join(site_packages, '_sounddevice_data')
 if os.path.isdir(sd_data_dir):
     for root, dirs, files in os.walk(sd_data_dir):
         for f in files:
             if f.endswith('.dll'):
-                rel = os.path.relpath(root, venv_site)
+                rel = os.path.relpath(root, site_packages)
                 sd_binaries.append((os.path.join(root, f), rel))
 
 datas = [
@@ -36,6 +36,8 @@ datas += collect_data_files('tokenizers')
 binaries = ct2_binaries + sd_binaries
 
 hiddenimports = [
+    'PyQt6',
+    'PyQt6.sip',
     'PyQt6.QtCore',
     'PyQt6.QtGui',
     'PyQt6.QtWidgets',

@@ -3,11 +3,14 @@ import subprocess
 
 desktop = os.path.join(os.path.expanduser("~"), "Desktop")
 appdata = os.getenv("APPDATA")
+localappdata = os.getenv("LOCALAPPDATA")
 start_menu = os.path.join(appdata, r"Microsoft\Windows\Start Menu\Programs")
 
-target = r"C:\Users\vrkal\.gemini\antigravity\scratch\whispr-flow\dist\Patte\Patte.exe"
-workdir = r"C:\Users\vrkal\.gemini\antigravity\scratch\whispr-flow\dist\Patte"
-icon = r"C:\Users\vrkal\.gemini\antigravity\scratch\whispr-flow\assets\icon.ico"
+target = os.path.join(localappdata, "Programs", "Patte", "Patte.exe")
+workdir = os.path.join(localappdata, "Programs", "Patte")
+icon = os.path.join(workdir, "assets", "icon.ico")
+if not os.path.exists(icon):
+    icon = os.path.join(workdir, "_internal", "assets", "icon.ico")
 
 shortcuts = [
     os.path.join(desktop, "Patte.lnk"),

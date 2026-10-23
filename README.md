@@ -1,20 +1,23 @@
 # 🎙️ Patte — Local AI Voice Dictation for Windows
 
-**Patte** is a fast, privacy-first Windows desktop voice dictation application inspired by Wispr Flow and Superwhisper. Hold **`Ctrl + Space`** in any application, speak naturally (complete with stumbles, filler words, or mid-sentence course corrections), and release—Patte transcribes your speech via a native C++ Whisper engine (`CTranslate2`), normalizes it through **`superwhisper/s1-mini`**, and streams the clean text directly into your active cursor window in under a second.
+**Patte** is a fast, privacy-first Windows desktop voice dictation application inspired by Wispr Flow and Superwhisper. Hold **`Ctrl + Space`** in any application, speak naturally (complete with stumbles, filler words, or mid-sentence course corrections), and release—Patte transcribes your speech via a native C++ Whisper engine (`CTranslate2`), refines it through an AI endpoint (local or network-hosted), and streams the clean text directly into your active cursor window in under a second.
 
 ---
 
 ## ✨ Key Features
 
 - **⚡ Sub-Second End-to-End Speed (~0.87s Time-to-First-Word):**
-  - Powered by native C++ **`faster-whisper` (`CTranslate2` `int8`)** + **`superwhisper/s1-mini`** via persistent HTTP keep-alive and real-time Server-Sent Events (SSE) token streaming.
+  - Powered by native C++ **`faster-whisper` (`CTranslate2` `int8`)** with persistent HTTP keep-alive and real-time Server-Sent Events (SSE) token streaming.
 - **🧠 Surgical Speech Normalization (Smart Mode):**
   - **Course Correction:** Say *"Let's meet at 5, actually scratch that, make it 6"* $\rightarrow$ outputs **`"Let's meet at 6."`**
   - **Filler Removal:** Automatically strips *"um"*, *"uh"*, *"like"*, and *"you know"* without paraphrasing or changing your authentic vocabulary.
   - **Intent-Based List Formatting:** Dictating 3+ enumerable items automatically formats into clean numbered/bulleted lists.
-- **⚡ Dual Dictation Modes:**
-  - **🧠 Smart Mode:** Whisper C++ ASR + S1-Mini AI normalization.
+- **⚡ Dual Dictation Modes & Graceful Offline Fallback:**
+  - **🧠 Smart Mode:** Whisper C++ ASR + AI server refinement.
   - **⚡ Fast Mode:** Pure Whisper C++ ASR (~450ms latency, zero LLM step).
+  - **🛡️ Resilient:** If your AI server URL is unreachable or down, Patte **never breaks or hangs**—it automatically stops at speech-to-text and outputs the raw Whisper transcription immediately.
+- **🌐 Flexible AI Endpoint Configuration:**
+  - Enter any OpenAI-compatible API URL in the Settings tab (e.g. `http://127.0.0.1:1234`, `http://127.0.0.1:11434`, or a network IP like `http://192.168.1.50:11434`).
 - **⌨️ Configurable Text Output Injection:**
   - **Live Keystroke Streaming (`Win32 SendInput`):** Types tokens character-by-character into the focused window in real time as the LLM generates them—without touching your clipboard.
   - **Instant Clipboard Paste (`Ctrl+V`):** Pastes the completed text all at once and automatically restores your previous clipboard contents.
@@ -26,22 +29,14 @@
 
 ## 🚀 Quick Installation (For End Users)
 
-Anyone with this repository can install **Patte** either as a standard Windows application (`Patte-Setup.exe`) or from source.
+You can install **Patte** either as a standard Windows application (`Patte-Setup.exe`) or from source.
 
-### Step 1: Install Required AI Runtime (For Smart Mode)
-Patte uses **LM Studio** to run the lightweight `superwhisper/s1-mini` (462 MB) speech-normalization model locally on your CPU or GPU:
-
-1. Download and install **[LM Studio](https://lmstudio.ai/)** for Windows.
-2. Open a terminal (PowerShell) or search inside LM Studio to download **`superwhisper/s1-mini-GGUF`**:
-   ```powershell
-   lms get superwhisper/s1-mini-GGUF
-   ```
-3. Start the LM Studio local server on port `1234` and load `s1-mini`:
-   ```powershell
-   lms server start
-   lms load superwhisper/s1-mini-GGUF --identifier s1-mini
-   ```
-   *(Note: If LM Studio is not running, Patte will automatically attempt to start it via `lms server start` or gracefully fall back to raw Whisper transcription).*
+### Step 1: Configure Your AI Server (Optional for Smart Mode)
+For AI refinement / smart transcript normalization, Patte connects to any OpenAI-compatible completions endpoint:
+- **Localhost:** Run your local server (e.g., `http://127.0.0.1:1234` or `http://127.0.0.1:11434`).
+- **Local Network / Remote:** Run your model server on another machine in your network (e.g., `http://192.168.1.50:11434`).
+- **Configure in App:** Simply open Patte's **Engine & Settings** tab and provide your **AI Server URL** and **Model Name**.
+- *Note:* If no server is running or reachable, Patte gracefully stops at Whisper transcription and outputs your text directly.
 
 ---
 
@@ -101,13 +96,13 @@ python main.py
 2. **Place your cursor** in any text field (VS Code, Chrome, Slack, Notion, Discord, Notepad, etc.).
 3. **Press and hold `Ctrl + Space`** — a minimal `● Listening` micro-pill appears at the bottom of your screen.
 4. **Speak naturally**, then **release `Ctrl + Space`**.
-5. Patte transcribes, polishes, and streams the text directly into your active window, then immediately dismisses the micro-pill.
+5. Patte transcribes (and polishes if an AI server is reached), then streams the text directly into your active window.
 
 ---
 
 ## 📚 Documentation
 
-- 📖 **[Step-by-Step User & Setup Instructions (`INSTRUCTIONS.md`)](INSTRUCTIONS.md)** — Detailed setup, LM Studio configuration, cloud provider setup (Groq/OpenAI), and troubleshooting.
+- 📖 **[Step-by-Step User & Setup Instructions (`INSTRUCTIONS.md`)](INSTRUCTIONS.md)** — Detailed setup and configuration options.
 - 🏗️ **[System Architecture & Engineering Guide (`ARCHITECTURE.md`)](ARCHITECTURE.md)** — Deep dive into the audio pipeline, thread safety (`WhisperDedicatedThread`), Win32 `WH_KEYBOARD_LL` hook filtering, SSE streaming, and latency benchmarks.
 
 ---

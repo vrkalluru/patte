@@ -20,19 +20,11 @@ WHISPER_DEVICE: str = os.getenv("WHISPER_DEVICE", "cpu")
 # Whisper language: "en" (skips language detection pass — 2x faster) or "auto"
 WHISPER_LANGUAGE: str = os.getenv("WHISPER_LANGUAGE", "en")
 
-# AI Refinement Provider: lmstudio | groq | openai
-AI_PROVIDER: str = os.getenv("AI_PROVIDER", "lmstudio").lower()
-
-# LM Studio local server settings (OpenAI-compatible API)
-LM_STUDIO_URL: str = os.getenv("LM_STUDIO_URL", "http://127.0.0.1:1234").replace("localhost", "127.0.0.1")
-LM_STUDIO_MODEL: str = os.getenv("LM_STUDIO_MODEL", "s1-mini")
-
-# Cloud Providers (for blazing fast ~200ms latency)
-GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "")
-GROQ_MODEL: str = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
-
-OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
-OPENAI_MODEL: str = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+# AI Refinement / Fine-Tuning Server URL & Model
+# Can be local (e.g. http://127.0.0.1:1234 for LM Studio, http://127.0.0.1:11434 for Ollama)
+# or reachable across your local network (e.g. http://192.168.1.50:11434)
+AI_SERVER_URL: str = os.getenv("AI_SERVER_URL", "http://127.0.0.1:1234")
+AI_MODEL: str = os.getenv("AI_MODEL", "s1-mini")
 
 # Whether to apply AI refinement after transcription
 AI_REFINEMENT_ENABLED: bool = os.getenv("AI_REFINEMENT_ENABLED", "true").lower() == "true"

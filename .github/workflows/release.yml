@@ -1,0 +1,57 @@
+name: Build and Release Patte
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Prepare configuration
+        run: |
+          copy .env.example .env
+
+      - name: Compile Standalone Patte
+        run: |
+          pyinstaller -y --distpath dist --workpath build whisprflow.spec
+
+      - name: Zip Standalone Application
+        run: |
+          Compress-Archive -Path dist\Patte\* -DestinationPath dist\Patte-Windows-x64.zip
+
+      - name: Compile Installer
+        run: |
+          pyinstaller -y --onefile --noconsole --name "Patte-Setup" --icon "assets\icon.ico" --distpath dist --workpath build installer_setup.py
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            dist/Patte-Setup.exe
+            dist/Patte-Windows-x64.zip
+          draft: false
+          prerelease: false
+          generate_release_notes: true

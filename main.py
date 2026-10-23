@@ -189,22 +189,12 @@ class PatteApp:
 
     def run(self):
         self.window.show()
+        self.window.raise_()
+        self.window.activateWindow()
         return self.app.exec()
 
 
 def main():
-    # Enforce single running instance via Windows Named Mutex
-    kernel32 = ctypes.windll.kernel32
-    mutex = kernel32.CreateMutexW(None, False, "Local\\PatteVoiceAppSingleInstanceMutex")
-    if kernel32.GetLastError() == 183:  # ERROR_ALREADY_EXISTS
-        print("[Patte] Another instance is already running; bringing window to front and exiting duplicate.", flush=True)
-        user32 = ctypes.windll.user32
-        hwnd = user32.FindWindowW(None, "Patte")
-        if hwnd:
-            user32.ShowWindow(hwnd, 9)  # SW_RESTORE
-            user32.SetForegroundWindow(hwnd)
-        sys.exit(0)
-
     app = PatteApp()
     sys.exit(app.run())
 
